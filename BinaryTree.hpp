@@ -2,8 +2,12 @@
 #include <sstream>
 #include <string>
 #include <iostream>
-
+#include <unordered_map>
+#include <queue>
 using namespace std;
+
+#define VALID_TREE() {if (!constructionState) { cout << "Invalid Tree" << endl; return;}}
+#define VALID_TREE_R(x) {if (!constructionState) { cout << "Invalid Tree" << endl;return (x);}}
 
 class BinaryTree {
 public:
@@ -16,51 +20,22 @@ public:
         BinaryTreeNode::deleteTree(root);
     }
     
-    void NameParenthesisTraversal() {
-        NameParenthesis(root);
-        cout << endl;
-    }
-    void PreorderTraversal() {
-        Preorder(root);
-        cout << endl;
-    }
-    void InorderTraversal() {
-        Inorder(root);
-        cout << endl;
-    }
-    void PostorderTraversal() {
-        Postorder(root);
-        cout << endl;
-    }
-    void LeftRightTraversal() {
-        LeftRight(root);
-        cout << endl;
-    }
+    void NameParenthesisTraversal();
+    void PreorderTraversal();
+    void InorderTraversal();
+    void PostorderTraversal();
+    void LevelorderTraversal();
+    void LeftRightTraversal();
 
-    int Height() {
-        return TreeHeight(root);
-    }
-    int CountNodes() {
-        return TreeCountNodes(root);
-    }
-    int CountNonLeafNodes() {
-        return TreeCountNonLeafNodes(root);
-    }
-    int CountLeafNodes() {
-        return TreeCountLeafNodes(root);
-    }
-    int CountDeg1Nodes() {
-        return TreeCountDeg1Nodes(root);
-    }
-    int CountDeg2Nodes() {
-        return TreeCountDeg2Nodes(root);
-    }
-    friend bool operator==(const BinaryTree& t1, const BinaryTree& t2) {
-        return BinaryTreeNode::Equal(t1.root, t2.root);
-    }
-    friend bool operator!=(const BinaryTree& t1, const BinaryTree& t2) {
-        return !BinaryTreeNode::Equal(t1.root, t2.root);
-    }
+    int Height();
+    int CountNodes();
+    int CountNonLeafNodes();
+    int CountLeafNodes();
+    int CountDeg1Nodes();
+    int CountDeg2Nodes();
+
+    friend bool operator==(const BinaryTree& t1, const BinaryTree& t2);
+    friend bool operator!=(const BinaryTree& t1, const BinaryTree& t2);
     BinaryTree& operator=(const BinaryTree& t);
 
 
@@ -72,14 +47,17 @@ private:
     void Preorder(BinaryTreeNode*);
     void Inorder(BinaryTreeNode*);
     void Postorder(BinaryTreeNode*);
+    void Levelorder(BinaryTreeNode*);
     void LeftRight(BinaryTreeNode*);
     void NameParenthesis(BinaryTreeNode*);
 
-    BinaryTreeNode* NameParenthesisConstruction(stringstream&);
+    BinaryTreeNode* NameParenthesisConstruction(string, int&);
     BinaryTreeNode* InorderPreorderConstruction(string, string, int&);
     BinaryTreeNode* InorderPostorderConstruction(string, string, int&);
-    BinaryTreeNode* InorderLevelorderConstruction(string, string, int&);
+    BinaryTreeNode* InorderLevelorderConstruction(string, string);
     BinaryTreeNode* LeftRightConstruction(string, int&);
+
+    void InsertLevelOrder(BinaryTreeNode*, char, unordered_map<char, int>&);
 
     int TreeHeight(BinaryTreeNode*);
     int TreeCountNodes(BinaryTreeNode*);

@@ -2,50 +2,51 @@
 #include <sstream>
 #include <string>
 #include <iostream>
-#include <queue>
+
 using namespace std;
 
 BinaryTree::BinaryTree(string inputString, int mode) {
     stringstream ss(inputString);
-        constructionState = true;
-        lCount = 0;
-        rCount = 0;
-        string a, b;
-        int index = 0;
-        switch(mode) {
-        case 0: // Name-parenthesis representation
-            root = NameParenthesisConstruction(ss);
-            break;
-        case 1: // Inorder Preorder construction
-            ss >> a;
-            ss >> b;
-            cout << "A: " << a << ", B: " << b << endl;
-            root = InorderPreorderConstruction(a, b, index);
-            break;
-        case 2: // Inorder Postorder construction
-            ss >> a;
-            ss >> b;
-            index = b.length() - 1;
-            root = InorderPostorderConstruction(a, b, index);
-            break;
-        case 3: // Inorder Levelorder construction
-            ss >> a;
-            ss >> b;
-            root = InorderLevelorderConstruction(a, b, index);
-            break;
-        case 4: // LeftRight construction
-            ss >> a;
-            cout << "A: " << a << endl;
-            root = LeftRightConstruction(a, index);
-            break;
-        default:
-            constructionState = false;
-            break;
-        }
-        if (constructionState == false) {
-            cout << "Construction failed" << endl;
-            BinaryTreeNode::deleteTree(root);
-        }
+    constructionState = true;
+    lCount = 0;
+    rCount = 0;
+    string a, b;
+    int index = 0;
+    switch(mode) {
+    case 0: // Name-parenthesis representation
+        root = NameParenthesisConstruction(inputString, index);
+        break;
+    case 1: // Inorder Preorder construction
+        ss >> a;
+        ss >> b;
+        cout << "A: " << a << ", B: " << b << endl;
+        root = InorderPreorderConstruction(a, b, index);
+        break;
+    case 2: // Inorder Postorder construction
+        ss >> a;
+        ss >> b;
+        index = b.length() - 1;
+        root = InorderPostorderConstruction(a, b, index);
+        break;
+    case 3: // Inorder Levelorder construction
+        ss >> a;
+        ss >> b;
+        root = InorderLevelorderConstruction(a, b);
+        break;
+    case 4: // LeftRight construction
+        ss >> a;
+        cout << "A: " << a << endl;
+        root = LeftRightConstruction(a, index);
+        break;
+    default:
+        constructionState = false;
+        break;
+    }
+    if (constructionState == false) {
+        cout << "Construction failed" << endl;
+        BinaryTreeNode::deleteTree(root);
+        root = nullptr;
+    }
 }
 
 void BinaryTree::Preorder(BinaryTreeNode* root) {
@@ -74,6 +75,24 @@ void BinaryTree::Postorder(BinaryTreeNode* root) {
     cout << root->data << " ";
 }
 
+void BinaryTree::Levelorder(BinaryTreeNode* root) {
+    if (root == nullptr) {
+        return;
+    }
+    queue<BinaryTreeNode*> q;
+    q.push(root);
+    while (!q.empty()) {
+        BinaryTreeNode* temp = q.front();
+        q.pop();
+        cout << temp->data << " ";
+        if (temp->left != nullptr) {
+            q.push(temp->left);
+        }
+        if (temp->right != nullptr) {
+            q.push(temp->right);
+        }
+    }
+}
 
 void BinaryTree::LeftRight(BinaryTreeNode* root) {
     if (root == nullptr) {
@@ -85,8 +104,10 @@ void BinaryTree::LeftRight(BinaryTreeNode* root) {
     LeftRight(root->right);
 }
 void BinaryTree::NameParenthesis(BinaryTreeNode* root) {
-    if (root == nullptr) return;
-
+    if (root == nullptr) {
+        cout << "()";
+        return;
+    }
     cout << root->data;
     cout << "(";
     NameParenthesis(root->left);
@@ -94,8 +115,42 @@ void BinaryTree::NameParenthesis(BinaryTreeNode* root) {
     cout << ")";
 }
 
-BinaryTreeNode* BinaryTree::NameParenthesisConstruction(stringstream& ss) {
-    return nullptr;
+BinaryTreeNode* BinaryTree::NameParenthesisConstruction(string input, int& index) {
+    cout << "Input: " << input << ", Index: " << index << endl;
+    if (constructionState == false) {
+        return nullptr;
+    }
+    if (input.length() <= index) {
+        return nullptr;
+    }
+    if (input[index] != '(' && input[index] != ')') {
+        BinaryTreeNode* temp = new BinaryTreeNode(string(1, input[index]));
+        index++;
+        if (input[index] == '(') {
+            temp->left = NameParenthesisConstruction(input, ++index);
+            temp->right = NameParenthesisConstruction(input, ++index);
+            if (input[index] == ')') {
+                index++;
+            } else {
+                constructionState = false;
+                delete temp;
+                return nullptr;
+            }
+        } else {
+            constructionState = false;
+            delete temp;
+            return nullptr;
+        }
+        return temp;
+    } else {
+        if (input[index] == '(' && input[index + 1] == ')') {
+            index++;
+            return nullptr;
+        } else {
+            constructionState = false;
+            return nullptr;
+        }
+    }
 }
 
 BinaryTreeNode* BinaryTree::InorderPreorderConstruction(string inorder, string preorder, int& preIndex) {
@@ -163,18 +218,50 @@ BinaryTreeNode* BinaryTree::InorderPostorderConstruction(string inorder, string 
     return temp;
 }
 
-BinaryTreeNode* BinaryTree::InorderLevelorderConstruction(string inorder, string levelOrder, int& levelIndex) {
-    queue<BinaryTreeNode*> q;
-    q.push(new BinaryTreeNode(string(1, levelOrder[levelIndex])));
-    
-    while(!q.empty()) {
-        BinaryTreeNode* temp = q.front();
-        q.pop();
-        int index = inorder.find(temp->data);
-        if (index == -1) {
+BinaryTreeNode* BinaryTree::InorderLevelorderConstruction(string inorder, string levelOrder) {
+    if (inorder.length() == 0) {
+        return nullptr;
+    }
+    if (levelOrder.length() != inorder.length()) {
+        constructionState = false;
+        return nullptr;
+    }
+    unordered_map<char, int> indexTable;
+    for (int i = 0; i < inorder.length(); i++) {
+        indexTable[inorder[i]] = i;
+    }
+    BinaryTreeNode* root = new BinaryTreeNode(string(1, levelOrder[0]));
+    for (int i = 1; i < levelOrder.length(); i++) {
+        if (indexTable.find(levelOrder[i]) == indexTable.end()) {
             constructionState = false;
             return nullptr;
         }
+        InsertLevelOrder(root, levelOrder[i], indexTable);
+    }
+    return root;
+}
+void BinaryTree::InsertLevelOrder(BinaryTreeNode* root, char data, unordered_map<char, int>& indexTable) {
+    if (constructionState == false) {
+        return;
+    }
+    int m = indexTable[(root->data)[0]];
+    int n = indexTable[data];
+    if (n < m) {
+        if (root->left == nullptr) {
+            root->left = new BinaryTreeNode(string(1, data));
+        } else {
+            InsertLevelOrder(root->left, data, indexTable);
+        }
+    } else if (n > m) {
+        if (root->right == nullptr) {
+            root->right = new BinaryTreeNode(string(1, data));
+        } else {
+            InsertLevelOrder(root->right, data, indexTable);
+        }
+
+    } else {
+        constructionState = false;
+        return;
     }
 }
 
@@ -261,8 +348,77 @@ int BinaryTree::TreeCountDeg2Nodes(BinaryTreeNode* root) {
 
 BinaryTree& BinaryTree::operator=(const BinaryTree& t) {
     if (this != &t) {
+        if (!t.constructionState) return *this;
         BinaryTreeNode::deleteTree(root);
         root = BinaryTreeNode::Copy(t.root);
     }
     return *this;
+}
+
+void BinaryTree::NameParenthesisTraversal() {
+    VALID_TREE();
+    NameParenthesis(root);
+    cout << endl;
+}
+void BinaryTree::PreorderTraversal() {
+    VALID_TREE();
+    Preorder(root);
+    cout << endl;
+}
+void BinaryTree::InorderTraversal() {
+    VALID_TREE();
+    Inorder(root);
+    cout << endl;
+}
+void BinaryTree::PostorderTraversal() {
+    VALID_TREE();
+    Postorder(root);
+    cout << endl;
+}
+void BinaryTree::LevelorderTraversal() {
+    VALID_TREE();
+    Levelorder(root);
+    cout << endl;
+}
+void BinaryTree::LeftRightTraversal() {
+    VALID_TREE();
+    LeftRight(root);
+    cout << endl;
+}
+
+int BinaryTree::Height() {
+    VALID_TREE_R(-1);
+    return TreeHeight(root);
+}
+int BinaryTree::CountNodes() {
+    VALID_TREE_R(-1);
+    return TreeCountNodes(root);
+}
+int BinaryTree::CountNonLeafNodes() {
+    VALID_TREE_R(-1);
+    return TreeCountNonLeafNodes(root);
+}
+int BinaryTree::CountLeafNodes() {
+    VALID_TREE_R(-1);
+    return TreeCountLeafNodes(root);
+}
+int BinaryTree::CountDeg1Nodes() {
+    VALID_TREE_R(-1);
+    return TreeCountDeg1Nodes(root);
+}
+int BinaryTree::CountDeg2Nodes() {
+    VALID_TREE_R(-1);
+    return TreeCountDeg2Nodes(root);
+}
+bool operator==(const BinaryTree& t1, const BinaryTree& t2) {
+    if (!t1.constructionState || !t2.constructionState) {
+        return false;
+    }
+    return BinaryTreeNode::Equal(t1.root, t2.root);
+}
+bool operator!=(const BinaryTree& t1, const BinaryTree& t2) {
+    if (!t1.constructionState || !t2.constructionState) {
+        return true;
+    }
+    return !BinaryTreeNode::Equal(t1.root, t2.root);
 }
